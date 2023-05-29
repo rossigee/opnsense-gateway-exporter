@@ -64,6 +64,10 @@ func (e *opnSenseExporter) Collect(ch chan<- prometheus.Metric) {
 			labels...,
 		)
 
+		if gateway.Loss == "~" {
+			continue
+		}
+
 		lossStr := strings.TrimSuffix(gateway.Loss, " %")
 		loss, err := strconv.ParseFloat(lossStr, 64)
 		if err != nil {

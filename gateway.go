@@ -66,6 +66,17 @@ func (e *opnSenseExporter) getGatewayStatus() (*GatewayStatusResponse, error) {
 
 	// Parse provided values
 	for i := range gatewayStatusResponse.Items {
+		online := gatewayStatusResponse.Items[i].StatusTranslated == "Online"
+		if online {
+			gatewayStatusResponse.Items[i].StatusValue = 1.0
+		} else {
+			gatewayStatusResponse.Items[i].StatusValue = 0.0
+		}
+
+		if gatewayStatusResponse.Items[i].Loss == "~" {
+			continue
+		}
+
 		loss, err := strconv.ParseFloat(strings.TrimSuffix(gatewayStatusResponse.Items[i].Loss, " %"), 64)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing loss: %v", err)
@@ -77,19 +88,13 @@ func (e *opnSenseExporter) getGatewayStatus() (*GatewayStatusResponse, error) {
 			return nil, fmt.Errorf("error parsing delay: %v", err)
 		}
 		gatewayStatusResponse.Items[i].DelayValue = delay
-		
+
 		stddev, err := strconv.ParseFloat(strings.TrimSuffix(gatewayStatusResponse.Items[i].StandardDev, " ms"), 64)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing stddev: %v", err)
 		}
 		gatewayStatusResponse.Items[i].StandardDevValue = stddev
 
-		online := gatewayStatusResponse.Items[i].StatusTranslated == "Online"
-		if online {
-			gatewayStatusResponse.Items[i].StatusValue = 1.0
-		} else {
-			gatewayStatusResponse.Items[i].StatusValue = 0.0
-		}
 	}
 
 	return &gatewayStatusResponse, nil
